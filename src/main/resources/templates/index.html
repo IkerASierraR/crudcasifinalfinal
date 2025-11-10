@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de pruebas SISINTUPT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: #f3f4f6;
+        }
+        h1 {
+            color: #1f2937;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        a.button {
+            display: block;
+            padding: 1.5rem 1rem;
+            background: #2563eb;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        a.button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.3);
+        }
+        p {
+            max-width: 720px;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+<h1>Panel rápido de pruebas</h1>
+<p>
+    Usa los siguientes accesos para probar los diferentes flujos del backend contra la base de datos
+    <strong>experimental7.0.sql</strong>. Cada pantalla contiene formularios mínimos para crear, consultar,
+    actualizar o eliminar registros; además de los formularios de autenticación.
+</p>
+<div class="grid">
+    <a class="button" href="/ui/usuarios">CRUD Usuario</a>
+    <a class="button" href="/ui/estudiantes">🎓 CRUD Estudiante</a>
+    <a class="button" href="/ui/docentes">👨‍🏫 CRUD Docente</a>
+    <a class="button" href="/ui/administrativos">💼 CRUD Administrativo</a>
+    <a class="button" href="/ui/login-academico">🔐 Login Académico</a>
+    <a class="button" href="/ui/login-administrativo">⚙️ Login Administrativo</a>
+</div>
+</body>
+</html>

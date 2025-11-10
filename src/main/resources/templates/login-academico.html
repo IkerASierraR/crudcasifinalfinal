@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Académico</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css" integrity="sha512-WPX7rlaR271GGBqBPdZiZsaAJ+lZeXqIuAvV38DSHLVYDBlnJrped1IovnHgwlHGawEq+y3OC/qoTr4ci9PX7A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 2rem; 
+            background: #f8fafc; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh;
+        }
+        h1 { color: #1f2937; margin-bottom: 0.5rem; }
+        .subtitle { color: #6b7280; margin-bottom: 2rem; text-align: center; }
+        a { align-self: flex-start; color: #2563eb; text-decoration: none; margin-bottom: 2rem; }
+        a:hover { text-decoration: underline; }
+        form { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(15,23,42,0.1); 
+            width: 100%; 
+            max-width: 400px; 
+            border: 1px solid #e5e7eb;
+        }
+        label { display: block; margin-top: 1rem; font-weight: 600; color: #374151; }
+        input { 
+            width: 100%; 
+            padding: 0.75rem; 
+            margin-top: 0.5rem; 
+            border-radius: 8px; 
+            border: 1px solid #d1d5db; 
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        button { 
+            margin-top: 1.5rem; 
+            padding: 0.9rem 1.2rem; 
+            background: #2563eb; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            width: 100%; 
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        button:hover { background: #1d4ed8; }
+        button:active { transform: translateY(1px); }
+        pre { 
+            margin-top: 1.5rem; 
+            background: #0f172a; 
+            color: #f8fafc; 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+            width: 100%; 
+            max-width: 400px; 
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .success { 
+            background: #dcfce7 !important; 
+            color: #166534 !important; 
+            border: 1px solid #bbf7d0;
+        }
+        .error { 
+            background: #fef2f2 !important; 
+            color: #dc2626 !important; 
+            border: 1px solid #fecaca;
+        }
+        .user-info {
+            background: #eff6ff !important;
+            color: #1e40af !important;
+            border: 1px solid #dbeafe;
+        }
+    </style>
+</head>
+<body>
+<a href="/">← Volver al inicio</a>
+<h1>Login Académico</h1>
+<p class="subtitle">Para estudiantes y docentes del sistema</p>
+
+<form id="login-form">
+    <label>Correo electrónico
+        <input type="email" name="correo" placeholder="usuario@upt.edu.pe" required>
+    </label>
+    <label>Contraseña
+        <input type="password" name="password" placeholder="Ingresa tu contraseña" required>
+    </label>
+    <button type="submit">Iniciar sesión académica</button>
+</form>
+
+<pre id="result">Ingresa tus credenciales para iniciar sesión...</pre>
+
+<script>
+    const result = document.getElementById('result');
+    const loginForm = document.getElementById('login-form');
+
+    loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        // Mostrar estado de carga
+        result.textContent = "🔐 Verificando credenciales...";
+        result.className = '';
+        
+        const data = Object.fromEntries(new FormData(event.target).entries());
+        
+        try {
+            const response = await fetch('/auth/login-academico', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            const responseText = await response.text();
+            
+            if (response.ok) {
+                // Login exitoso
+                try {
+                    const loginData = JSON.parse(responseText);
+                    result.className = 'success';
+                    result.textContent = `✅ LOGIN EXITOSO\n\n👤 Usuario: ${loginData.nombreCompleto}\n🎯 Tipo: ${loginData.tipoUsuario}\n🆔 ID: ${loginData.idUsuario}\n📋 Rol: ${loginData.idRol}\n💬 ${loginData.mensaje || 'Bienvenido al sistema académico'}`;
+                } catch (e) {
+                    result.className = 'success';
+                    result.textContent = `✅ ${response.status} ${response.statusText}\n${responseText}`;
+                }
+            } else {
+                // Error en login
+                result.className = 'error';
+                
+                try {
+                    const errorData = JSON.parse(responseText);
+                    result.textContent = `❌ ERROR DE LOGIN\n\n${errorData.message || errorData.error || responseText}`;
+                } catch (e) {
+                    result.textContent = `❌ ${response.status} ${response.statusText}\n${responseText}`;
+                }
+            }
+        } catch (error) {
+            // Error de red
+            result.className = 'error';
+            result.textContent = `❌ ERROR DE CONEXIÓN\n\nNo se pudo conectar con el servidor. Verifica tu conexión a internet.`;
+            console.error('Error:', error);
+        }
+    });
+
+    // Limpiar resultado cuando el usuario empiece a escribir
+    loginForm.addEventListener('input', () => {
+        if (result.textContent !== "Ingresa tus credenciales para iniciar sesión...") {
+            result.textContent = "Ingresa tus credenciales para iniciar sesión...";
+            result.className = '';
+        }
+    });
+</script>
+</body>
+</html>

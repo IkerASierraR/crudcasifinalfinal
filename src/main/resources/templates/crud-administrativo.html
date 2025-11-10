@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de administrativos</title>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css"
+          integrity="sha512-WPX7rlaR271GGBqBPdZiZsaAJ+lZeXqIuAvV38DSHLVYDBlnJrped1IovnHgwlHGawEq+y3OC/qoTr4ci9PX7A=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        :root { font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        body {
+            background: #f1f5f9;
+            margin: 0;
+            padding: 2.5rem clamp(1rem, 4vw, 3.5rem);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        header { display: flex; flex-direction: column; gap: 0.5rem; }
+        header h1 { margin: 0; color: #0f172a; font-size: clamp(2rem, 3vw, 2.6rem); }
+        header p { margin: 0; max-width: 60ch; color: #475569; }
+        a.back-link { color: #2563eb; text-decoration: none; font-weight: 600; }
+        a.back-link:hover { text-decoration: underline; }
+        .grid { display: grid; gap: 2rem; }
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            padding: clamp(1.25rem, 2vw, 2rem);
+            box-shadow: 0 25px 45px -20px rgba(15, 23, 42, 0.18);
+        }
+        h2 { margin-top: 0; color: #0f172a; font-size: 1.5rem; }
+        form { display: grid; gap: 1rem; }
+        label { display: grid; gap: 0.35rem; font-weight: 600; color: #1e293b; }
+        input, select {
+            border-radius: 12px;
+            border: 1px solid #cbd5f5;
+            padding: 0.65rem 0.85rem;
+            font: inherit;
+            background: #f8fafc;
+            transition: border 0.2s ease, background 0.2s ease;
+        }
+        input:focus, select:focus {
+            border-color: #2563eb;
+            outline: 3px solid rgba(37, 99, 235, 0.15);
+            background: #fff;
+        }
+        button {
+            border: none;
+            border-radius: 999px;
+            padding: 0.75rem 1.6rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            background: #2563eb;
+            color: #fff;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 12px 25px -12px rgba(37, 99, 235, 0.7); }
+        button.secondary {
+            background: transparent;
+            border: 1px solid #cbd5f5;
+            color: #1e3a8a;
+            box-shadow: none;
+        }
+        button.secondary:hover { background: rgba(37,99,235,0.12); transform: none; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px #e2e8f0;
+        }
+        thead { background: #0f172a; color: #f8fafc; }
+        th, td { text-align: left; padding: 0.85rem 1rem; font-size: 0.92rem; }
+        tbody tr:nth-child(odd) { background: #f8fafc; }
+        tbody tr:nth-child(even) { background: #eef2ff; }
+        tbody tr.highlight { outline: 2px solid #2563eb; }
+        .empty-row td { text-align: center; padding: 2rem 1rem; color: #64748b; font-style: italic; }
+        .table-actions { display: flex; gap: 0.5rem; }
+        .table-actions button { padding: 0.5rem 1rem; font-size: 0.85rem; }
+        .table-actions button.danger { background: #dc2626; color: #fff; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+        .toolbar input[type="search"] { min-width: min(320px, 100%); }
+        .feedback { display: none; padding: 1rem; border-radius: 12px; font-weight: 600; }
+        .feedback.show { display: block; }
+        .feedback.success { background: #ecfdf5; color: #047857; border: 1px solid #6ee7b7; }
+        .feedback.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+        dialog {
+            border: none;
+            border-radius: 18px;
+            padding: 0;
+            max-width: min(560px, 90vw);
+            width: 100%;
+            box-shadow: 0 40px 70px -35px rgba(15, 23, 42, 0.6);
+        }
+        dialog form { padding: clamp(1.25rem, 2vw, 2rem); display: grid; gap: 1rem; }
+        dialog header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0; }
+        dialog header h3 { margin: 0; font-size: 1.3rem; color: #0f172a; }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 0.75rem; }
+        @media (min-width: 1024px) { .grid { grid-template-columns: 360px 1fr; align-items: start; } }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="/">← Volver al inicio</a>
+
+    <header>
+        <h1>Control de personal administrativo</h1>
+        <p>
+            Crea, consulta y mantiene al personal administrativo. La fecha de incorporación se asigna automáticamente en base
+            al reloj del servidor, por lo que no es necesario solicitarla manualmente.
+        </p>
+    </header>
+
+    <div id="feedback" class="feedback" role="alert"></div>
+
+    <div class="grid">
+        <section class="card">
+            <h2>Nuevo administrativo</h2>
+            <form id="create-form" autocomplete="off">
+                <label>Nombre
+                    <input name="nombre" required>
+                </label>
+                <label>Apellido
+                    <input name="apellido" required>
+                </label>
+                <label>Tipo de documento
+                    <select name="idTipoDoc" required>
+                        <option value="1">DNI</option>
+                        <option value="2">CE</option>
+                        <option value="3">PAS</option>
+                        <option value="4">PTP</option>
+                        <option value="5">CI</option>
+                        <option value="6">RUC</option>
+                        <option value="7">PN</option>
+                        <option value="8">CR</option>
+                        <option value="9">DIE</option>
+                        <option value="10">LIC</option>
+                        <option value="11">CU</option>
+                        <option value="12">OTRO</option>
+                    </select>
+                </label>
+                <label>Número de documento
+                    <input name="numDoc" required>
+                </label>
+                <label>Celular
+                    <input name="celular" required>
+                </label>
+                <label>Género
+                    <select name="genero" required>
+                        <option value="true">Masculino</option>
+                        <option value="false">Femenino</option>
+                    </select>
+                </label>
+                <label>Correo institucional
+                    <input type="email" name="correo" required>
+                </label>
+                <label>Contraseña
+                    <input type="password" name="password" required>
+                </label>
+                <label>Turno
+                    <select name="turno" required>
+                        <option value="Mañana">Mañana</option>
+                        <option value="Tarde">Tarde</option>
+                        <option value="Noche">Noche</option>
+                        <option value="Completo">Completo</option>
+                    </select>
+                </label>
+                <label>Extensión telefónica
+                    <input name="extension" placeholder="Ej: 1234">
+                </label>
+                <label>Rol asignado
+                    <select name="idRol" required>
+                        <option value="3">Administrador</option>
+                        <option value="4">Supervisor</option>
+                    </select>
+                </label>
+                <button type="submit">Registrar administrativo</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <div class="toolbar">
+                <input id="filter" type="search" placeholder="Filtrar por nombre, documento, correo o turno">
+                <form id="search-form" class="toolbar" style="margin:0;gap:0.5rem;">
+                    <input type="number" name="id" placeholder="ID exacto" min="1" style="width:140px;">
+                    <button type="submit" class="secondary">Buscar ID</button>
+                </form>
+                <button id="refresh" type="button" class="secondary">Refrescar lista</button>
+            </div>
+
+            <table aria-label="Administrativos registrados">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Documento</th>
+                        <th>Turno</th>
+                        <th>Extensión</th>
+                        <th>Rol</th>
+                        <th>Correo</th>
+                        <th>Fecha incorp.</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-rows"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <dialog id="edit-modal">
+        <form id="edit-form" method="dialog">
+            <header>
+                <h3>Editar administrativo</h3>
+                <button type="button" id="close-modal" class="secondary">Cerrar</button>
+            </header>
+            <input type="hidden" name="id">
+            <label>Nombre
+                <input name="nombre" required>
+            </label>
+            <label>Apellido
+                <input name="apellido" required>
+            </label>
+            <label>Tipo de documento
+                <select name="idTipoDoc" required>
+                    <option value="1">DNI</option>
+                    <option value="2">CE</option>
+                    <option value="3">PAS</option>
+                    <option value="4">PTP</option>
+                    <option value="5">CI</option>
+                    <option value="6">RUC</option>
+                    <option value="7">PN</option>
+                    <option value="8">CR</option>
+                    <option value="9">DIE</option>
+                    <option value="10">LIC</option>
+                    <option value="11">CU</option>
+                    <option value="12">OTRO</option>
+                </select>
+            </label>
+            <label>Número de documento
+                <input name="numDoc" required>
+            </label>
+            <label>Celular
+                <input name="celular" required>
+            </label>
+            <label>Género
+                <select name="genero" required>
+                    <option value="true">Masculino</option>
+                    <option value="false">Femenino</option>
+                </select>
+            </label>
+            <label>Correo institucional
+                <input type="email" name="correo" required>
+            </label>
+            <label>Contraseña (dejar vacío si no cambia)
+                <input type="password" name="password" placeholder="Nueva contraseña">
+            </label>
+            <label>Turno
+                <select name="turno" required>
+                    <option value="Mañana">Mañana</option>
+                    <option value="Tarde">Tarde</option>
+                    <option value="Noche">Noche</option>
+                    <option value="Completo">Completo</option>
+                </select>
+            </label>
+            <label>Extensión telefónica
+                <input name="extension">
+            </label>
+            <label>Rol asignado
+                <select name="idRol" required>
+                    <option value="3">Administrador</option>
+                    <option value="4">Supervisor</option>
+                </select>
+            </label>
+            <p style="margin:0;font-size:0.85rem;color:#475569;">La fecha de incorporación se conserva automáticamente.</p>
+            <div class="dialog-actions">
+                <button type="button" id="cancel-edit" class="secondary">Cancelar</button>
+                <button type="submit">Guardar cambios</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script>
+        const TURNO_LABELS = {
+            'MAÑANA': 'Mañana',
+            'TARDE': 'Tarde',
+            'NOCHE': 'Noche',
+            'COMPLETO': 'Completo'
+        };
+
+        const feedback = document.getElementById('feedback');
+        const createForm = document.getElementById('create-form');
+        const filterInput = document.getElementById('filter');
+        const searchForm = document.getElementById('search-form');
+        const refreshButton = document.getElementById('refresh');
+        const tbody = document.getElementById('admin-rows');
+        const editModal = document.getElementById('edit-modal');
+        const editForm = document.getElementById('edit-form');
+        const closeModalBtn = document.getElementById('close-modal');
+        const cancelEditBtn = document.getElementById('cancel-edit');
+
+        const state = {
+            administrativos: [],
+            filtrados: [],
+            highlightedId: null
+        };
+
+        const tipoDocLabel = (tipoDoc) => {
+            if (!tipoDoc) return '';
+            return tipoDoc.abreviatura || tipoDoc.nombre || '';
+        };
+
+        const obtenerCorreo = (adm) => adm.usuario?.auth?.correoU || '';
+        const turnoLabel = (valor) => TURNO_LABELS[valor] || valor || '—';
+
+        const showFeedback = (type, message) => {
+            feedback.textContent = message;
+            feedback.className = `feedback show ${type}`;
+            if (type === 'success') {
+                setTimeout(() => feedback.classList.remove('show'), 3500);
+            }
+        };
+
+        const request = async (url, options = {}) => {
+            const response = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || response.statusText);
+            }
+            if (response.status === 204) return null;
+            return response.json();
+        };
+
+        const applyFilter = () => {
+            const term = filterInput.value.trim().toLowerCase();
+            if (!term) {
+                state.filtrados = [...state.administrativos];
+            } else {
+               state.filtrados = state.administrativos.filter(adm => {
+                    const nombre = `${adm.usuario.nombre} ${adm.usuario.apellido}`.toLowerCase();
+                    return nombre.includes(term)
+                        || (adm.usuario.numDoc || '').toLowerCase().includes(term)
+                        || obtenerCorreo(adm).toLowerCase().includes(term)
+                        || turnoLabel(adm.turno).toLowerCase().includes(term);
+                });
+            }
+            renderTable();
+        };
+
+        const formatFecha = (fechaIso) => {
+            if (!fechaIso) return '—';
+            try {
+                const fecha = new Date(fechaIso);
+                return fecha.toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: '2-digit' });
+            } catch (e) {
+                return fechaIso;
+            }
+        };
+
+        const renderTable = () => {
+            tbody.innerHTML = '';
+            if (state.filtrados.length === 0) {
+                const row = document.createElement('tr');
+                row.className = 'empty-row';
+                const cell = document.createElement('td');
+                cell.colSpan = 9;
+                cell.textContent = 'No hay administrativos para mostrar.';
+                row.appendChild(cell);
+                tbody.appendChild(row);
+                return;
+            }
+
+            state.filtrados.forEach(adm => {
+                const row = document.createElement('tr');
+                row.dataset.id = adm.idAdministrativo;
+                if (state.highlightedId === adm.idAdministrativo) {
+                    row.classList.add('highlight');
+                }
+
+                row.innerHTML = `
+                    <td>${adm.idAdministrativo}</td>
+                    <td>${adm.usuario.nombre} ${adm.usuario.apellido}</td>
+                    <td>${tipoDocLabel(adm.usuario.tipoDoc)} ${adm.usuario.numDoc}</td>
+                    <td>${turnoLabel(adm.turno)}</td>
+                    <td>${adm.extension || '—'}</td>
+                    <td>${adm.usuario.rol?.nombre || ''}</td>
+                    <td>${obtenerCorreo(adm) || '—'}</td>
+                    <td>${formatFecha(adm.fechaIncorporacion)}</td>
+                    <td>
+                        <div class="table-actions">
+                            <button type="button" class="secondary" data-action="edit">Editar</button>
+                            <button type="button" class="danger" data-action="delete">Eliminar</button>
+                        </div>
+                    </td>
+                `;
+
+                row.querySelector('[data-action="edit"]').addEventListener('click', () => abrirEdicion(adm));
+                row.querySelector('[data-action="delete"]').addEventListener('click', () => eliminarAdministrativo(adm));
+
+                tbody.appendChild(row);
+            });
+        };
+
+        const normalizarGenero = (valor) => valor === true || valor === 'true';
+
+        const serializarFormulario = (form) => {
+            const data = Object.fromEntries(new FormData(form).entries());
+            if (data.id) data.id = Number(data.id);
+            if (data.idTipoDoc) data.idTipoDoc = Number(data.idTipoDoc);
+            if (data.idRol) data.idRol = Number(data.idRol);
+            if (data.genero !== undefined) data.genero = normalizarGenero(data.genero);
+            if (data.password === '') delete data.password;
+            return data;
+        };
+
+        const cargarAdministrativos = async () => {
+            try {
+                const data = await request('/api/administrativos');
+                state.administrativos = data;
+                state.highlightedId = null;
+                applyFilter();
+            } catch (error) {
+                showFeedback('error', `No se pudo obtener la lista: ${error.message}`);
+            }
+        };
+
+        const abrirEdicion = (adm) => {
+            editForm.reset();
+            editForm.elements.id.value = adm.idAdministrativo;
+            editForm.elements.nombre.value = adm.usuario.nombre;
+            editForm.elements.apellido.value = adm.usuario.apellido;
+            editForm.elements.idTipoDoc.value = adm.usuario.tipoDoc?.idTipoDoc || 1;
+            editForm.elements.numDoc.value = adm.usuario.numDoc;
+            editForm.elements.celular.value = adm.usuario.celular || '';
+            editForm.elements.genero.value = String(adm.usuario.genero ?? true);
+            editForm.elements.correo.value = obtenerCorreo(adm);
+            editForm.elements.password.value = '';
+            editForm.elements.turno.value = turnoLabel(adm.turno);
+            editForm.elements.extension.value = adm.extension || '';
+            editForm.elements.idRol.value = adm.usuario.rol?.idRol || 3;
+            editModal.showModal();
+        };
+
+        const eliminarAdministrativo = async (adm) => {
+            if (!confirm(`¿Eliminar al administrativo ${adm.usuario.nombre} ${adm.usuario.apellido}?`)) {
+                return;
+            }
+            try {
+                await request(`/api/administrativos/${adm.idAdministrativo}`, { method: 'DELETE' });
+                showFeedback('success', 'Administrativo eliminado correctamente.');
+                await cargarAdministrativos();
+            } catch (error) {
+                showFeedback('error', `No se pudo eliminar: ${error.message}`);
+            }
+        };
+
+        createForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const payload = serializarFormulario(createForm);
+            delete payload.id;
+            try {
+                await request('/api/administrativos', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                createForm.reset();
+                showFeedback('success', 'Administrativo registrado con éxito.');
+                await cargarAdministrativos();
+            } catch (error) {
+                showFeedback('error', `No se pudo registrar: ${error.message}`);
+            }
+        });
+
+        editForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const payload = serializarFormulario(editForm);
+            const id = payload.id;
+            delete payload.id;
+            try {
+                await request(`/api/administrativos/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                editModal.close();
+                showFeedback('success', 'Cambios guardados correctamente.');
+                await cargarAdministrativos();
+            } catch (error) {
+                showFeedback('error', `No se pudo actualizar: ${error.message}`);
+            }
+        });
+
+        const cerrarModal = () => editModal.close();
+        closeModalBtn.addEventListener('click', cerrarModal);
+        cancelEditBtn.addEventListener('click', cerrarModal);
+
+        filterInput.addEventListener('input', applyFilter);
+        refreshButton.addEventListener('click', async () => {
+            filterInput.value = '';
+            await cargarAdministrativos();
+        });
+
+        searchForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const id = Number(new FormData(searchForm).get('id'));
+            if (!id) {
+                showFeedback('error', 'Ingresa un ID válido para buscar.');
+                return;
+            }
+            try {
+                const administrativo = await request(`/api/administrativos/${id}`);
+                await cargarAdministrativos();
+                state.highlightedId = administrativo.idAdministrativo;
+                applyFilter();
+                const row = tbody.querySelector(`tr[data-id="${administrativo.idAdministrativo}"]`);
+                if (row) {
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                showFeedback('success', `Administrativo ${administrativo.usuario.nombre} ${administrativo.usuario.apellido} encontrado.`);
+            } catch (error) {
+                showFeedback('error', `No se encontró el administrativo indicado: ${error.message}`);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarAdministrativos();
+        });
+    </script>
+</body>
+</html>

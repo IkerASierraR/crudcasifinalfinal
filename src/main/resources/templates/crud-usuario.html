@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Usuario</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css" integrity="sha512-WPX7rlaR271GGBqBPdZiZsaAJ+lZeXqIuAvV38DSHLVYDBlnJrped1IovnHgwlHGawEq+y3OC/qoTr4ci9PX7A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body { font-family: Arial, sans-serif; padding: 2rem; background: #f8fafc; }
+        h1 { color: #1f2937; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        form { background: white; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
+        label { display: block; margin-top: 0.75rem; font-weight: 600; }
+        input, select { width: 100%; padding: 0.6rem; margin-top: 0.25rem; border-radius: 6px; border: 1px solid #cbd5f5; }
+        button { margin-top: 1rem; padding: 0.8rem 1.2rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
+        pre { background: #0f172a; color: #f8fafc; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+        .success { color: #059669; }
+        .error { color: #dc2626; }
+    </style>
+</head>
+<body>
+<a href="/">← Volver</a>
+<h1>CRUD Usuario</h1>
+<p>Los usuarios creados desde aquí solo registran datos generales y credenciales en <code>usuario</code> y <code>usuario_auth</code>.</p>
+
+<div class="grid">
+    <form id="create-user">
+        <h2>Crear usuario</h2>
+        <label>Nombre <input name="nombre" required></label>
+        <label>Apellido <input name="apellido" required></label>
+        <label>Tipo Documento
+            <select name="idTipoDoc" required>
+                <option value="1">DNI</option>
+                <option value="2">CE</option>
+                <option value="3">PAS</option>
+                <option value="4">PTP</option>
+                <option value="5">CI</option>
+                <option value="6">RUC</option>
+                <option value="7">PN</option>
+                <option value="8">CR</option>
+                <option value="9">DIE</option>
+                <option value="10">LIC</option>
+                <option value="11">CU</option>
+                <option value="12">OTRO</option>
+            </select>
+        </label>
+        <label>N° Documento <input name="numDoc" required></label>
+        <label>Celular <input name="celular" required></label>
+        <label>Género
+            <select name="genero" required>
+                <option value="true">Masculino</option>
+                <option value="false">Femenino</option>
+            </select>
+        </label>
+        <label>Rol
+            <select name="idRol" required>
+                <option value="1">Docente</option>
+                <option value="2">Estudiante</option>
+                <option value="3">Administrador</option>
+                <option value="4">Supervisor</option>
+            </select>
+        </label>
+        <label>Correo <input type="email" name="correo" required></label>
+        <label>Contraseña <input type="password" name="password" required></label>
+        <button type="submit">Registrar</button>
+    </form>
+
+    <form id="update-user">
+        <h2>Actualizar usuario</h2>
+        <label>ID Usuario <input type="number" name="id" required></label>
+        <label>Nombre <input name="nombre" required></label>
+        <label>Apellido <input name="apellido" required></label>
+        <label>Tipo Documento
+            <select name="idTipoDoc" required>
+                <option value="1">DNI</option>
+                <option value="2">CE</option>
+                <option value="3">PAS</option>
+                <option value="4">PTP</option>
+                <option value="5">CI</option>
+                <option value="6">RUC</option>
+                <option value="7">PN</option>
+                <option value="8">CR</option>
+                <option value="9">DIE</option>
+                <option value="10">LIC</option>
+                <option value="11">CU</option>
+                <option value="12">OTRO</option>
+            </select>
+        </label>
+        <label>N° Documento <input name="numDoc" required></label>
+        <label>Celular <input name="celular" required></label>
+        <label>Género
+            <select name="genero" required>
+                <option value="true">Masculino</option>
+                <option value="false">Femenino</option>
+            </select>
+        </label>
+        <label>Rol
+            <select name="idRol" required>
+                <option value="1">Docente</option>
+                <option value="2">Estudiante</option>
+                <option value="3">Administrador</option>
+                <option value="4">Supervisor</option>
+            </select>
+        </label>
+        <label>Correo <input type="email" name="correo" required></label>
+        <label>Contraseña (dejar vacío para mantener) <input type="password" name="password"></label>
+        <button type="submit">Actualizar</button>
+    </form>
+</div>
+
+<div class="grid">
+    <form id="get-user">
+        <h2>Buscar por ID</h2>
+        <label>ID Usuario <input type="number" name="id" required></label>
+        <button type="submit">Consultar</button>
+    </form>
+    <form id="delete-user">
+        <h2>Eliminar usuario</h2>
+        <label>ID Usuario <input type="number" name="id" required></label>
+        <button type="submit">Eliminar</button>
+    </form>
+</div>
+
+<button id="list-users">Listar todos los usuarios</button>
+<pre id="result">Esperando acciones...</pre>
+
+<script>
+    const result = document.getElementById('result');
+
+    async function handleSubmit(event, method, urlBuilder, includeBody = true) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const payload = Object.fromEntries(formData.entries());
+        
+        // Conversión de tipos
+        if (payload.genero !== undefined) {
+            payload.genero = payload.genero === 'true';
+        }
+        if (payload.id) {
+            payload.id = Number(payload.id);
+        }
+        if (payload.idTipoDoc) payload.idTipoDoc = Number(payload.idTipoDoc);
+        if (payload.idRol) payload.idRol = Number(payload.idRol);
+        if (payload.numDoc) payload.numDoc = payload.numDoc.trim();
+        if (payload.password === '') delete payload.password;
+        
+        const url = urlBuilder(payload);
+        const options = { 
+            method, 
+            headers: { 'Content-Type': 'application/json' } 
+        };
+        
+        if (includeBody) {
+            const body = { ...payload };
+            delete body.id;
+            options.body = JSON.stringify(body);
+        }
+        
+        try {
+            const response = await fetch(url, options);
+            const text = await response.text();
+            
+            if (response.ok) {
+                result.className = 'success';
+                result.textContent = `✅ ${response.status} ${response.statusText}\n${text}`;
+            } else {
+                result.className = 'error';
+                result.textContent = `❌ ${response.status} ${response.statusText}\n${text}`;
+            }
+        } catch (error) {
+            result.className = 'error';
+            result.textContent = `❌ Error: ${error.message}`;
+        }
+    }
+
+    // CREATE - Crear usuario
+    document.getElementById('create-user').addEventListener('submit', (event) =>
+        handleSubmit(event, 'POST', () => '/api/usuarios'));
+
+    // UPDATE - Actualizar usuario
+    document.getElementById('update-user').addEventListener('submit', (event) =>
+        handleSubmit(event, 'PUT', ({ id }) => `/api/usuarios/${id}`));
+
+    // GET - Obtener usuario por ID
+    document.getElementById('get-user').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const id = event.target.elements.id.value;
+        try {
+            const response = await fetch(`/api/usuarios/${id}`);
+            const text = await response.text();
+            
+            if (response.ok) {
+                result.className = 'success';
+                result.textContent = `✅ ${response.status} ${response.statusText}\n${text}`;
+            } else {
+                result.className = 'error';
+                result.textContent = `❌ ${response.status} ${response.statusText}\n${text}`;
+            }
+        } catch (error) {
+            result.className = 'error';
+            result.textContent = `❌ Error: ${error.message}`;
+        }
+    });
+
+    // DELETE - Eliminar usuario
+    document.getElementById('delete-user').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const id = event.target.elements.id.value;
+        try {
+            const response = await fetch(`/api/usuarios/${id}`, { method: 'DELETE' });
+            
+            if (response.ok) {
+                result.className = 'success';
+                result.textContent = `✅ ${response.status} ${response.statusText}\nUsuario eliminado correctamente`;
+            } else {
+                result.className = 'error';
+                result.textContent = `❌ ${response.status} ${response.statusText}`;
+            }
+        } catch (error) {
+            result.className = 'error';
+            result.textContent = `❌ Error: ${error.message}`;
+        }
+    });
+
+    // LIST - Listar todos los usuarios
+    document.getElementById('list-users').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/usuarios');
+            const text = await response.text();
+            
+            if (response.ok) {
+                result.className = 'success';
+                result.textContent = `✅ ${response.status} ${response.statusText}\n${text}`;
+            } else {
+                result.className = 'error';
+                result.textContent = `❌ ${response.status} ${response.statusText}\n${text}`;
+            }
+        } catch (error) {
+            result.className = 'error';
+            result.textContent = `❌ Error: ${error.message}`;
+        }
+    });
+</script>
+</body>
+</html>
